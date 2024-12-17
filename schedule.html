@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weekly Class Schedule</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 10px;
+        font-size: 14px;
+        display: flex;
+        flex-direction: row; /* Side-by-side layout */
+        min-height: 100vh; /* Ensure full height */
+      }
+
+      .container {
+        flex: 1; /* Main content takes remaining space */
+        overflow-y: auto; /* Allow vertical scrolling for main content */
+        margin-left: 10px; /* Offset for side panel */
+      }
+
+      .side-panel {
+        width: 250px; /* Fixed width for the side panel */
+        background-color: #f9f9f9;
+        padding: 10px;
+        border: 1px solid #ccc;
+        position: sticky;
+        top: 0;
+        height: 100vh; /* Take full height of the screen */
+        overflow-y: auto; /* Allow scrolling inside the side panel */
+      }
+
+      table {
+        width: 100%; /* Reduced width */
+        margin: auto;
+        border-collapse: collapse;
+        table-layout: fixed; /* Fixed width for columns */
+      }
+
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 4px; /* Reduced padding */
+        text-align: center;
+        width: 16.6%; /* Fixed width for equal column distribution */
+      }
+
+      th {
+        background-color: #f4f4f4;
+      }
+
+      td {
+        height: 25px; /* Reduced height */
+      }
+
+      .class-slot {
+        background-color: #a2d5f2;
+        color: #000;
+        font-weight: bold;
+        font-size: 12px;
+      }
+
+      .input-container {
+        margin-bottom: 10px;
+      }
+
+      select,
+      input,
+      button {
+        margin: 2px; /* Reduced margin */
+        padding: 4px 8px; /* Reduced padding */
+        font-size: 14px; /* Smaller font size */
+      }
+
+      h1 {
+        font-size: 18px; /* Smaller header */
+      }
+
+      .class-list {
+        width: 100%;
+        text-align: left;
+        padding: 5px; /* Reduced padding */
+        background-color: #f9f9f9;
+        margin-bottom: 10px;
+      }
+
+      .class-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3px; /* Reduced space between items */
+      }
+
+      .delete-btn {
+        background-color: #ff6b6b;
+        color: #fff;
+        border: none;
+        padding: 2px 5px;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="side-panel">
+      <h3>Added Classes</h3>
+      <div class="input-container">
+        <label for="class-name">Class:</label>
+        <input type="text" id="class-name" placeholder="Enter class name" />
+
+        <label for="time">Time:</label>
+        <select id="time">
+          <option value="MWF 800 900">MWF 8:00-8:50 AM</option>
+          <option value="MWF 900 1000">MWF 9:00-9:50 AM</option>
+          <option value="MWF 1000 1100">MWF 10:00-10:50 AM</option>
+          <option value="MWF 1100 1200">MWF 11:00-11:50 AM</option>
+          <option value="MWF 1200 1300">MWF 12:00-12:50 PM</option>
+          <option value="MWF 1300 1400">MWF 1:00-1:50 PM</option>
+          <option value="MWF 1400 1500">MWF 2:00-2:50 PM</option>
+          <option value="MWF 1500 1600">MWF 3:00-3:50 PM</option>
+          <option value="TH 900 1030">TTh 9:00-10:20 AM</option>
+          <option value="TH 1030 1200">TTh 10:30-11:50 AM</option>
+          <option value="TH 1300 1430">TTh 1:00-2:20 PM</option>
+          <option value="TH 1430 1600">TTh 2:30-3:50 PM</option>
+          <option value="M 1500 1730">M 3:00-5:30 PM</option>
+          <option value="T 1600 1830">T 4:00-6:30 PM</option>
+          <option value="W 1500 1730">W 3:00-5:30 PM</option>
+          <option value="H 1600 1830">Th 4:00-6:30 PM</option>
+          <option value="F 1500 1730">F 3:00-5:30 PM</option>
+        </select>
+
+        <button onclick="addCustomClass()">Add Class</button>
+      </div>
+
+      <div class="class-list" id="class-list">
+        <h4>Classes</h4>
+        <div id="class-items">No classes added yet.</div>
+      </div>
+    </div>
+
+    <div class="container">
+      <h1>Weekly Class Schedule</h1>
+      <button onclick="generateSchedule()">Generate Random Schedule</button>
+      <label for="numClasses">Number of classes:</label>
+        <select id="numClasses">
+          <option>3</option>
+          <option>4</option>
+          <option>5</option>
+        </select>
+      <br /><br />
+      <table id="schedule">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-body"></tbody>
+      </table>
+    </div>
+
+    <script>
+      const classes = {};
+      const timeSlots = [
+        "8:00 AM",
+        "8:30 AM",
+        "9:00 AM",
+        "9:30 AM",
+        "10:00 AM",
+        "10:30 AM",
+        "11:00 AM",
+        "11:30 AM",
+        "12:00 PM",
+        "12:30 PM",
+        "1:00 PM",
+        "1:30 PM",
+        "2:00 PM",
+        "2:30 PM",
+        "3:00 PM",
+        "3:30 PM",
+        "4:00 PM",
+        "4:30 PM",
+        "5:00 PM",
+        "5:30 PM",
+        "6:00 PM",
+        "6:30 PM",
+        "7:00 PM",
+        "7:30 PM",
+        "8:00 PM",
+        "8:30 PM",
+        "9:00 PM",
+      ];
+      var pickedClasses = {};
+
+      function timeToIndex(time) {
+        index = Math.floor(time / 100 - 8) * 2;
+        if (time % 100 == 30) {
+          index += 1;
+        }
+        return index
+      }
+
+      function addCustomClass() {
+        const name = document.getElementById("class-name").value;
+        const time = document.getElementById("time").value;
+
+        let timeSplit = time.split(" ");
+        const start = timeSplit[1];
+        const end = timeSplit[2];
+
+        if (!name || parseInt(start) >= parseInt(end)) {
+          alert("Please enter a valid class name and time range.");
+          return;
+        }
+
+        const newClass = time;
+        classes[name] = newClass;
+
+        generateSchedule();
+      }
+
+      
+      // Function to check time overlap
+      function hasOverlap(newClass) {
+        const [days, start, end] = newClass.split(" ");
+        const newStart = timeToIndex(parseInt(start));
+        const newEnd = timeToIndex(parseInt(end));
+
+        for (let key in pickedClasses) {
+          const [pickedDays, pickedStart, pickedEnd] = pickedClasses[key].split(" ");
+          if (days.split("").some((d) => pickedDays.includes(d))) {
+            const pickedStartIdx = timeToIndex(parseInt(pickedStart));
+            const pickedEndIdx = timeToIndex(parseInt(pickedEnd));
+            if (
+              (newStart < pickedEndIdx && newStart >= pickedStartIdx) ||
+              (newEnd > pickedStartIdx && newEnd <= pickedEndIdx)
+            ) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function displayTime(time) {
+        times = {
+          "MWF 800 900": "MWF 8:00-8:50 AM",
+          "MWF 900 1000": "MWF 9:00-9:50 AM",
+          "MWF 1000 1100": "MWF 10:00-10:50 AM",
+          "MWF 1100 1200": "MWF 11:00-11:50 AM",
+          "MWF 1200 1300": "MWF 12:00-12:50 PM",
+          "MWF 1300 1400": "MWF 1:00-1:50 PM",
+          "MWF 1400 1500": "MWF 2:00-2:50 PM",
+          "MWF 1500 1600": "MWF 3:00-3:50 PM",
+          "TH 900 1030": "TTh 9:00-10:20 AM",
+          "TH 1030 1200": "TTh 10:30-11:50 AM",
+          "TH 1300 1430": "TTh 1:00-2:20 PM",
+          "TH 1430 1600": "TTh 2:30-3:50 PM",
+          "M 1500 1730": "M 3:00-5:30 PM",
+          "T 1600 1830": "T 4:00-6:30 PM",
+          "W 1500 1730": "W 3:00-5:30 PM",
+          "H 1600 1830": "Th 4:00-6:30 PM",
+          "F 1500 1730": "F 3:00-5:30 PM"
+        }
+        return times[time];
+      }
+
+      function deleteClass(classKey) {
+        delete classes[classKey];
+        generateSchedule();
+      }
+
+      // Generate schedule
+      function generateSchedule() {
+        const keys = Object.keys(classes);
+        pickedClasses = {};
+
+        if (keys.length === 0) {
+          // If no classes are present, clear the class list and schedule body
+          document.getElementById("class-items").innerHTML = "<p>No classes added.</p>";
+          document.getElementById("schedule-body").innerHTML = "<tr><td colspan='6'>No schedule to display.</td></tr>";
+          return; // Exit early if there are no classes
+        }
+
+        // add classes to the added classes section
+        const classItems = document.getElementById("class-items");
+        classItems.innerHTML = ""; // Clear existing items
+
+        Object.keys(classes).forEach((key) => {
+          const item = document.createElement("div");
+          item.className = "class-item";
+          item.innerHTML = `
+            <span>${key}: ${displayTime(classes[key])}</span>
+            <button class="delete-btn" onclick="deleteClass('${key}')">Delete</button>
+          `;
+          classItems.appendChild(item);
+        });
+
+        let numClasses = document.getElementById("numClasses").value;
+        console.log(numClasses)
+
+        for (let i = 0; i < numClasses; i++) {
+          let attempts = 0;
+          let added = false;
+          while (attempts < 1000 && !added) {
+            const randKey = keys[Math.floor(Math.random() * keys.length)];
+            if (!pickedClasses[randKey] && !hasOverlap(classes[randKey])) {
+              pickedClasses[randKey] = classes[randKey];
+              console.log(pickedClasses);
+              added = true;
+            }
+            attempts++;
+          }
+        }
+
+        renderSchedule();
+      }
+
+      // Render schedule in table
+      function renderSchedule() {
+        const tableBody = document.getElementById("schedule-body");
+        tableBody.innerHTML = "";
+
+        timeSlots.forEach((time, idx) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${time}</td>`;
+
+          ["M", "T", "W", "H", "F"].forEach((day) => {
+            const cell = document.createElement("td");
+            cell.id = `${day}-${idx}`;
+            row.appendChild(cell);
+          });
+          tableBody.appendChild(row);
+        });
+
+        for (let key in pickedClasses) {
+          const [days, start, end] = pickedClasses[key].split(" ");
+          const startIdx = timeToIndex(parseInt(start));
+          const endIdx = timeToIndex(parseInt(end));
+
+          days.split("").forEach((day) => {
+            for (let i = startIdx; i < endIdx; i++) {
+              const cell = document.getElementById(`${day}-${i}`);
+              if (cell) cell.className = "class-slot";
+                cell.innerText = key;
+            }
+          });
+        }
+      }
+
+      generateSchedule();
+    </script>
+  </body>
+</html>
