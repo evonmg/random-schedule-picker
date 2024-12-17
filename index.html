@@ -10,7 +10,7 @@
     <link rel="manifest" href="favicon_io/site.webmanifest">
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: Helvetica, sans-serif;
         text-align: center;
         margin: 10px;
         font-size: 14px;
@@ -106,15 +106,42 @@
         border-radius: 3px;
         font-size: 12px;
       }
+
+      @media (max-width: 768px) {
+        body {
+          flex-direction: column; /* Stack side-panel and container vertically */
+        }
+
+        .side-panel {
+          width: 100%; /* Full width */
+          height: auto; /* Adjust height */
+          position: relative; /* Remove sticky position */
+        }
+
+        .container {
+          margin-left: 0; /* Remove left margin */
+        }
+
+        table {
+          font-size: 12px; /* Adjust table font size for smaller screens */
+        }
+
+        th,
+        td {
+          padding: 2px; /* Reduce padding */
+          font-size: 10px; /* Make the text smaller */
+        }
+      }
+
     </style>
   </head>
 
   <body>
     <div class="side-panel">
-      <h3>Added Classes</h3>
+      <h3>Shopping Cart</h3>
       <div class="input-container">
         <label for="class-name">Class:</label>
-        <input type="text" id="class-name" placeholder="Enter class name" />
+        <input type="text" id="class-name" placeholder="Enter class name" autocomplete="off"/>
 
         <label for="time">Time:</label>
         <select id="time">
@@ -157,19 +184,21 @@
           <option>5</option>
         </select>
       <br /><br />
-      <table id="schedule">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Monday</th>
-            <th>Tuesday</th>
-            <th>Wednesday</th>
-            <th>Thursday</th>
-            <th>Friday</th>
-          </tr>
-        </thead>
-        <tbody id="schedule-body"></tbody>
-      </table>
+      <div style="overflow-x: auto;">
+        <table id="schedule">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Monday</th>
+              <th>Tuesday</th>
+              <th>Wednesday</th>
+              <th>Thursday</th>
+              <th>Friday</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <script>
