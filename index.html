@@ -26,7 +26,7 @@
       }
 
       .side-panel {
-        width: 250px; /* Fixed width for the side panel */
+        width: 350px; /* Fixed width for the side panel */
         background-color: #f9f9f9;
         padding: 10px;
         border: 1px solid #ccc;
@@ -46,9 +46,30 @@
       th,
       td {
         border: 1px solid #ccc;
-        padding: 4px; /* Reduced padding */
+        padding: 4px;
         text-align: center;
-        width: 16.6%; /* Fixed width for equal column distribution */
+      }
+
+      /* Time column smaller */
+      th:first-child,
+      td:first-child {
+        width: 80px;
+        white-space: nowrap;
+      }
+
+      /* Make other columns equal */
+      th:nth-child(n+2),
+      td:nth-child(n+2) {
+        width: 18%; /* each of the 5 day columns gets equal 20% */
+      }
+
+
+      /* Make other columns auto-fill remaining space */
+      table {
+        width: 100%;
+        margin: auto;
+        border-collapse: collapse;
+        table-layout: auto; /* Let widths adjust naturally */
       }
 
       th {
@@ -105,6 +126,17 @@
         cursor: pointer;
         border-radius: 3px;
         font-size: 12px;
+      }
+
+      .lock-btn {
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1.75em;
+        margin-left: 5px;
+      }
+      .lock-btn:hover {
+        transform: scale(1.1);
       }
 
       @media (max-width: 768px) {
@@ -204,80 +236,74 @@
     </div>
 
     <script>
-      const classes = {};
+      let classes = []; // store all classes as array
+      let pickedClasses = [];
+      const classColors = {};
+    
       const timeSlots = [
-        "8:00 AM",
-        "8:30 AM",
-        "9:00 AM",
-        "9:30 AM",
-        "10:00 AM",
-        "10:30 AM",
-        "11:00 AM",
-        "11:30 AM",
-        "12:00 PM",
-        "12:30 PM",
-        "1:00 PM",
-        "1:30 PM",
-        "2:00 PM",
-        "2:30 PM",
-        "3:00 PM",
-        "3:30 PM",
-        "4:00 PM",
-        "4:30 PM",
-        "5:00 PM",
-        "5:30 PM",
-        "6:00 PM",
-        "6:30 PM",
-        "7:00 PM",
-        "7:30 PM",
-        "8:00 PM",
-        "8:30 PM",
-        "9:00 PM",
+        "8:00 AM","8:30 AM","9:00 AM","9:30 AM","10:00 AM","10:30 AM",
+        "11:00 AM","11:30 AM","12:00 PM","12:30 PM","1:00 PM","1:30 PM",
+        "2:00 PM","2:30 PM","3:00 PM","3:30 PM","4:00 PM","4:30 PM",
+        "5:00 PM","5:30 PM","6:00 PM","6:30 PM","7:00 PM","7:30 PM",
+        "8:00 PM","8:30 PM","9:00 PM"
       ];
-      var pickedClasses = {};
-
+    
+      function getRandomPastelColor() {
+        const r = Math.floor((Math.random() * 127) + 127);
+        const g = Math.floor((Math.random() * 127) + 127);
+        const b = Math.floor((Math.random() * 127) + 127);
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+    
+      function getContrastYIQ(rgb) {
+        const rgbValues = rgb.match(/\d+/g).map(Number);
+        const [r, g, b] = rgbValues;
+        const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+        return yiq >= 128 ? "#000000" : "#FFFFFF";
+      }
+    
       function timeToIndex(time) {
-        index = Math.floor(time / 100 - 8) * 2;
+        let index = Math.floor(time / 100 - 8) * 2;
         if (time % 100 == 30) {
           index += 1;
         }
-        return index
+        return index;
       }
-
+    
       function addCustomClass() {
-        const name = document.getElementById("class-name").value;
+        const name = document.getElementById("class-name").value.trim();
         const time = document.getElementById("time").value;
-
-        let timeSplit = time.split(" ");
-        const start = timeSplit[1];
-        const end = timeSplit[2];
-
+    
+        const [days, start, end] = time.split(" ");
         if (!name || parseInt(start) >= parseInt(end)) {
           alert("Please enter a valid class name and time range.");
           return;
         }
+    
+        classes.push({
+          id: Date.now() + Math.random(),
+          name: name,
+          time: time,
+          locked: false
+        });
 
-        const newClass = time;
-        classes[name] = newClass;
-
+    
         generateSchedule();
       }
-
-      
-      // Function to check time overlap
-      function hasOverlap(newClass) {
-        const [days, start, end] = newClass.split(" ");
+    
+      function hasOverlap(newTime) {
+        const [days, start, end] = newTime.split(" ");
         const newStart = timeToIndex(parseInt(start));
         const newEnd = timeToIndex(parseInt(end));
-
-        for (let key in pickedClasses) {
-          const [pickedDays, pickedStart, pickedEnd] = pickedClasses[key].split(" ");
-          if (days.split("").some((d) => pickedDays.includes(d))) {
-            const pickedStartIdx = timeToIndex(parseInt(pickedStart));
-            const pickedEndIdx = timeToIndex(parseInt(pickedEnd));
+    
+        for (let cls of pickedClasses) {
+          const [pDays, pStart, pEnd] = cls.time.split(" ");
+          if (days.split("").some(d => pDays.includes(d))) {
+            const pStartIdx = timeToIndex(parseInt(pStart));
+            const pEndIdx = timeToIndex(parseInt(pEnd));
             if (
-              (newStart < pickedEndIdx && newStart >= pickedStartIdx) ||
-              (newEnd > pickedStartIdx && newEnd <= pickedEndIdx)
+              (newStart < pEndIdx && newStart >= pStartIdx) ||
+              (newEnd > pStartIdx && newEnd <= pEndIdx)
             ) {
               return true;
             }
@@ -285,9 +311,9 @@
         }
         return false;
       }
-
+    
       function displayTime(time) {
-        times = {
+        const times = {
           "MWF 800 900": "MWF 8:00-8:50 AM",
           "MWF 900 1000": "MWF 9:00-9:50 AM",
           "MWF 1000 1100": "MWF 10:00-10:50 AM",
@@ -308,70 +334,91 @@
           "W 1500 1730": "W 3:00-5:30 PM",
           "H 1600 1830": "Th 4:00-6:30 PM",
           "F 1500 1730": "F 3:00-5:30 PM"
-        }
+        };
         return times[time];
       }
-
-      function deleteClass(classKey) {
-        delete classes[classKey];
+    
+      function deleteClass(id) {
+        classes = classes.filter(c => c.id !== id);
         generateSchedule();
       }
-
-      // Generate schedule
+    
       function generateSchedule() {
-        const keys = Object.keys(classes);
-        pickedClasses = {};
+        
+        pickedClasses = [];
 
-        if (keys.length === 0) {
-          // If no classes are present, clear the class list and schedule body
-          document.getElementById("class-items").innerHTML = "<p>No classes added.</p>";
-          document.getElementById("schedule-body").innerHTML = "<tr><td colspan='6'>No schedule to display.</td></tr>";
-          return; // Exit early if there are no classes
+        // First, add all locked classes
+        const lockedClasses = classes.filter(c => c.locked);
+        const numClassesPicked = parseInt(document.getElementById("numClasses").value);
+        if (lockedClasses.length > numClassesPicked) {
+          alert(`You have locked ${lockedClasses.length} classes, which is more than the selected number of classes (${numClassesPicked}). Please unlock some classes or increase the number.`);
+          return;  // stop generating schedule
         }
 
-        // add classes to the added classes section
+        for (let cls of lockedClasses) {
+          pickedClasses.push(cls);
+          if (!classColors[cls.id]) {
+            classColors[cls.id] = getRandomPastelColor();
+          }
+        }
+    
+        if (classes.length === 0) {
+          document.getElementById("class-items").innerHTML = "<p>No classes added.</p>";
+          document.getElementById("schedule-body").innerHTML = "<tr><td colspan='6'>No schedule to display.</td></tr>";
+          return;
+        }
+    
         const classItems = document.getElementById("class-items");
-        classItems.innerHTML = ""; // Clear existing items
-
-        Object.keys(classes).forEach((key) => {
+        classItems.innerHTML = "";
+    
+        classes.forEach((cls) => {
           const item = document.createElement("div");
           item.className = "class-item";
           item.innerHTML = `
-            <span>${key}: ${displayTime(classes[key])}</span>
-            <button class="delete-btn" onclick="deleteClass('${key}')">Delete</button>
+            <span>${cls.name}: ${displayTime(cls.time)}</span>
+            <button class="lock-btn" onclick="toggleLock(${cls.id})">
+              ${cls.locked ? "🔒" : "🔓"}
+            </button>
+            <button class="delete-btn" onclick="deleteClass(${cls.id})">Delete</button>
           `;
           classItems.appendChild(item);
         });
-
-        let numClasses = document.getElementById("numClasses").value;
-        console.log(numClasses)
-
-        for (let i = 0; i < numClasses; i++) {
-          let attempts = 0;
-          let added = false;
-          while (attempts < 1000 && !added) {
-            const randKey = keys[Math.floor(Math.random() * keys.length)];
-            if (!pickedClasses[randKey] && !hasOverlap(classes[randKey])) {
-              pickedClasses[randKey] = classes[randKey];
-              console.log(pickedClasses);
-              added = true;
+    
+        let numClasses = parseInt(document.getElementById("numClasses").value);
+          for (let i = pickedClasses.length; i < numClasses; i++) {
+            let attempts = 0;
+            let added = false;
+            while (attempts < 1000 && !added) {
+              const randClass = classes[Math.floor(Math.random() * classes.length)];
+              if (!pickedClasses.some(c => c.id === randClass.id) && !hasOverlap(randClass.time)) {
+                pickedClasses.push(randClass);
+                if (!classColors[randClass.id]) {
+                  classColors[randClass.id] = getRandomPastelColor();
+                }
+                added = true;
+              }
+              attempts++;
             }
-            attempts++;
           }
-        }
-
+    
         renderSchedule();
       }
 
-      // Render schedule in table
+      function toggleLock(id) {
+        const cls = classes.find(c => c.id === id);
+        if (cls) {
+          cls.locked = !cls.locked;
+        }
+        generateSchedule();
+      }
+    
       function renderSchedule() {
         const tableBody = document.getElementById("schedule-body");
         tableBody.innerHTML = "";
-
+    
         timeSlots.forEach((time, idx) => {
           const row = document.createElement("tr");
           row.innerHTML = `<td>${time}</td>`;
-
           ["M", "T", "W", "H", "F"].forEach((day) => {
             const cell = document.createElement("td");
             cell.id = `${day}-${idx}`;
@@ -379,26 +426,36 @@
           });
           tableBody.appendChild(row);
         });
-
-        for (let key in pickedClasses) {
-          const [days, start, end] = pickedClasses[key].split(" ");
+    
+        for (let cls of pickedClasses) {
+          const [days, start, end] = cls.time.split(" ");
           const startIdx = timeToIndex(parseInt(start));
           const endIdx = timeToIndex(parseInt(end));
-
+          const bgColor = classColors[cls.id];
+          const textColor = getContrastYIQ(bgColor);
+    
           days.split("").forEach((day) => {
             for (let i = startIdx; i < endIdx; i++) {
               const cell = document.getElementById(`${day}-${i}`);
-              if (cell) cell.className = "class-slot";
-                cell.innerText = key;
+              if (cell) {
+                cell.style.backgroundColor = bgColor;
+                cell.style.color = textColor;
+                cell.innerText = cls.name;
+              }
             }
           });
         }
       }
-
+    
       generateSchedule();
     </script>
+    
+    
   </body>
 </html>
 
 <!--TODO: add classes that are for sure going to be picked-->
-<!--TODO: make the colors look better-->
+<!--TODO: make the colors look betterconst r = Math.floor((Math.random() * 127) + 127); // 127–254
+  const g = Math.floor((Math.random() * 127) + 127);
+  const b = Math.floor((Math.random() * 127) + 127);
+  return `rgb(${r}, ${g}, ${b})`;-->
